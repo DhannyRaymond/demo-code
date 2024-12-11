@@ -5,7 +5,9 @@ spring:
     url: jdbc:postgresql://localhost:5432/nutech_integrasi
     username: postgres
     password: docker
-    driver-class-name: org.postgresql.Driver
+#    driver-class-name: org.postgresql.Driver
+  profile:
+    active: dev
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
