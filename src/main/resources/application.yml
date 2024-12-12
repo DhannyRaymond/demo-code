@@ -2,7 +2,7 @@ spring:
   application:
     name: demo
   datasource:
-    url: jdbc:postgresql://localhost:5432/nutech_integrasi
+    url: jdbc:postgresql://localhost:5432/demo
     username: postgres
     password: docker
 #    driver-class-name: org.postgresql.Driver
