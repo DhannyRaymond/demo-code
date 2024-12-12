@@ -12,8 +12,10 @@ import com.example.demo.mapper.ProfileMapper;
 import com.example.demo.mapper.RegistrationMapper;
 import com.example.demo.repository.BalanceRepository;
 import com.example.demo.repository.MembershipRepository;
+import com.example.demo.utils.CommonUtils;
 import com.example.demo.utils.JwtUtils;
 import com.example.demo.utils.ValidationUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +47,9 @@ public class MembershipService {
     private final RegistrationMapper registrationMapper;
     private final ProfileMapper profileMapper;
 
-    public String registration(RegistrationDTO registrationDTO) throws CustomException {
+    public String registration(RegistrationDTO registrationDTO) throws CustomException, JsonProcessingException {
+        String message = CommonUtils.convertUsingJackson(registrationDTO);
+        log.info("start processing registration with payload: {}", message);
         ValidationUtils.validateEmail(registrationDTO.getEmail());
         ValidationUtils.validatePassword(registrationDTO.getPassword(), null, "registration");
 
@@ -53,36 +57,48 @@ public class MembershipService {
         registrationDTO.setPassword(encoderPassword);
         Membership membership = membershipRepository.save(registrationMapper.toEntity(registrationDTO));
         balanceRepository.save(new Balance(membership, 0));
+
+        log.info("end processing registration with payload: {}", message);
         return "Registrasi berhasil silahkan login";
     }
 
-    public Map<String, String> login(LoginDTO loginDTO) throws CustomException {
+    public Map<String, String> login(LoginDTO loginDTO) throws CustomException, JsonProcessingException {
+        String message = CommonUtils.convertUsingJackson(loginDTO);
+        log.info("start processing login with payload: {}", message);
         Membership membership = membershipRepository.findByEmail(loginDTO.getEmail());
         ValidationUtils.validateEmail(loginDTO.getEmail());
         ValidationUtils.validatePassword(loginDTO.getPassword(), membership.getPassword(), "login");
 
         String token = JwtUtils.generateToken(loginDTO.getEmail());
 
+        log.info("end processing login with payload: {}", message);
         return Map.of("token", token);
     }
 
     public MembershipDTO getProfile(HttpServletRequest request) throws CustomException, IOException {
         String email = ValidationUtils.validateLogin(request);
+
+        log.info("start processing get profile with email: {}", email);
         Membership membership = membershipRepository.findByEmail(email);
+        log.info("end processing get profile with email: {}", email);
         return profileMapper.toDto(membership);
     }
 
     public MembershipDTO updateProfile(HttpServletRequest request, ProfileDTO profileDTO) throws CustomException, IOException {
         String email = ValidationUtils.validateLogin(request);
+
+        log.info("start processing update profile with email: {}", email);
         Membership membership = membershipRepository.findByEmail(email);
         membership.setFirstName(profileDTO.getFirstName());
         membership.setLastName(profileDTO.getLastName());
+        log.info("end processing update profile with email: {}", email);
         return profileMapper.toDto(membership);
     }
 
     public MembershipDTO updateProfileImage(HttpServletRequest request, MultipartFile file) throws CustomException, IOException {
         String UPLOAD_DIR = applicationProperties.getBaseUrl();
         String email = ValidationUtils.validateLogin(request);
+        log.info("start processing update profile image with email: {}", email);
         ValidationUtils.validateFile(file);
         Membership membership = membershipRepository.findByEmail(email);
 
@@ -97,8 +113,10 @@ public class MembershipService {
             Files.copy(file.getInputStream(), path);
 
             membership.setProfileImage(path.toString());
+            log.info("end processing update profile image with email: {}", email);
             return profileMapper.toDto(membership);
         } catch (IOException e) {
+            log.error("File upload failed: {}", e.getMessage());
             throw new CustomException(102, "File upload failed", null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

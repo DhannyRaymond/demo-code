@@ -21,7 +21,9 @@ public class InformationService {
     private final BannerMapper bannerMapper;
 
     public List<BannerDTO> banner() {
+        log.info("start processing get banner");
         List<Banner> banners = informationRepository.findAll();
+        log.info("end processing get banner");
         return bannerMapper.toDto(banners);
     }
 }

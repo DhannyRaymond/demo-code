@@ -4,6 +4,7 @@ import com.example.demo.dto.BaseListDTO;
 import com.example.demo.dto.ResponseModel;
 import com.example.demo.exception.CustomException;
 import com.example.demo.service.TransactionService;
+import com.example.demo.utils.CommonUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,24 +30,28 @@ public class TransactionController {
     @GetMapping("/balance")
     public ResponseEntity<ResponseModel<Object>> balance(HttpServletRequest request) throws CustomException, IOException {
         // TODO: UNAUTHORIZE HANDLING STILL GOT 403 INSTEAD 401 WHEN TOKEN EXPIRED
+        log.info("start get balance");
         return ResponseEntity.ok(new ResponseModel<>(0, "Get Balance Berhasil", transactionService.balance(request)));
     }
 
     @PostMapping("/topup")
     public ResponseEntity<ResponseModel<Object>> topup(HttpServletRequest request, @RequestBody Map<String, Object> topupMap) throws CustomException, IOException {
         // TODO: UNAUTHORIZE HANDLING STILL GOT 403 INSTEAD 401 WHEN TOKEN EXPIRED
+        log.info("start topup");
         return ResponseEntity.ok(new ResponseModel<>(0, "Top Up Balance berhasil", transactionService.topup(request, topupMap)));
     }
 
     @PostMapping("/transaction")
     public ResponseEntity<ResponseModel<Object>> transaction(HttpServletRequest request, @RequestBody Map<String, String> requestMap) throws CustomException, IOException {
         // TODO: UNAUTHORIZE HANDLING STILL GOT 403 INSTEAD 401 WHEN TOKEN EXPIRED
+        log.info("start transaction with payload: {}", requestMap.get("service_code"));
         return ResponseEntity.ok(new ResponseModel<>(0, "Transaksi berhasil", transactionService.transaction(request, requestMap)));
     }
 
     @GetMapping("/transaction/history")
     public ResponseEntity<ResponseModel<Object>> transactionHistory(HttpServletRequest request, @ModelAttribute BaseListDTO dtoRequest) throws CustomException, IOException {
         // TODO: UNAUTHORIZE HANDLING STILL GOT 403 INSTEAD 401 WHEN TOKEN EXPIRED
+        log.info("start get transaction history with payload: {}", CommonUtils.convertUsingJackson(dtoRequest));
         return ResponseEntity.ok(new ResponseModel<>(0, "Get History Berhasil", transactionService.transactionHistory(request, dtoRequest)));
     }
 }

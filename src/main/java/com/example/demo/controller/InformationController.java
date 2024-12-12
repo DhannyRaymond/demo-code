@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+
 @Slf4j
 @RestController
 @RequestMapping("/module/information")
@@ -23,11 +25,13 @@ public class InformationController {
 
     @GetMapping("/banner")
     public ResponseEntity<ResponseModel<Object>> banner() throws CustomException {
+        log.info("start get banner");
         return ResponseEntity.ok(new ResponseModel<>(0, "Sukses", informationService.banner()));
     }
 
     @GetMapping("/services")
-    public ResponseEntity<ResponseModel<Object>> services(HttpServletRequest request) throws CustomException {
-        return ResponseEntity.ok(new ResponseModel<>(0, "Sukses", partnerService.getServices()));
+    public ResponseEntity<ResponseModel<Object>> services(HttpServletRequest request) throws CustomException, IOException {
+        log.info("start get service");
+        return ResponseEntity.ok(new ResponseModel<>(0, "Sukses", partnerService.getServices(request)));
     }
 }

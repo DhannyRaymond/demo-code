@@ -49,14 +49,19 @@ public class TransactionService {
 
     public BalanceDTO balance(HttpServletRequest request) throws CustomException, IOException {
         String email = ValidationUtils.validateLogin(request);
+
+        log.info("start processing get balance with email: {}", email);
         Membership membership = membershipRepository.findByEmail(email);
 
         Balance balance = balanceRepository.findByMembershipId(membership.getId());
+        log.info("end processing get balance with email: {}", email);
         return balanceMapper.toDto(balance);
     }
 
     public BalanceDTO topup(HttpServletRequest request, Map<String, Object> topupMap) throws CustomException, IOException {
         String email = ValidationUtils.validateLogin(request);
+
+        log.info("start processing topup with email: {}", email);
         Object obj = CommonUtils.getMapValue("top_up_amount", topupMap);
         Integer topupAmount = ValidationUtils.validateTopup(obj);
         Membership membership = membershipRepository.findByEmail(email);
@@ -67,23 +72,28 @@ public class TransactionService {
 
         transactionRepository.save(new Transaction(membership, "INV".concat(String.valueOf(Instant.now().toEpochMilli())), "TOPUP", "Top Up balance", topupAmount));
 
+        log.info("end processing topup with email: {}", email);
         return balanceMapper.toDto(balance);
     }
 
     public PaymentDTO transaction(HttpServletRequest request, Map<String, String> requestMap) throws CustomException, IOException {
         String email = ValidationUtils.validateLogin(request);
+
+        log.info("start processing transaction with email: {}", email);
         Membership membership = membershipRepository.findByEmail(email);
         Balance balance = balanceRepository.findByMembershipId(membership.getId());
 
         String serviceCode = CommonUtils.getMapValue("service_code", requestMap);
         Partner partner = partnerRepository.findByServiceCode(serviceCode);
         if (Objects.isNull(partner)) {
+            log.error("transaction with service_code: {} not found", serviceCode);
             throw new CustomException(102, "Service ataus Layanan tidak ditemukan", null, HttpStatus.BAD_REQUEST);
         }
         String invoiceNumber;
         Transaction transaction;
 
         if (balance.getBalance().compareTo(partner.getServiceTariff()) < 0) {
+            log.error("service cost: {}, balance: {} - transaction with service_code: {} insufficient balance",partner.getServiceTariff(), balance.getBalance(), serviceCode);
             throw new CustomException(102, "Saldo tidak mencukupi untuk melakukan pembayaran");
         } else {
             Integer finalAmount = balance.getBalance() - partner.getServiceTariff();
@@ -93,23 +103,28 @@ public class TransactionService {
             invoiceNumber = "INV".concat(String.valueOf(Instant.now().toEpochMilli()));
             transaction = new Transaction(membership, invoiceNumber, "PAYMENT", partner.getServiceName(), partner.getServiceTariff());
             transactionRepository.save(transaction);
+            log.info("transaction: {} success with email: {}", serviceCode, email);
         }
 
+        log.info("end processing get profile with email: {}", email);
         return this.mappingToResponse(partner, transaction, invoiceNumber);
     }
 
     public TransactionHistoryDTO transactionHistory(HttpServletRequest request, BaseListDTO dtoRequest) throws CustomException, IOException {
         String email = ValidationUtils.validateLogin(request);
 
+        log.info("start processing get transaction history with email: {}", email);
         List<Transaction> transactions;
         Membership membership = membershipRepository.findByEmail(email);
 
         if (null == dtoRequest.getLimit()) {
             transactions = transactionRepository.findByMembershipIdOrderByCreatedOnDesc(membership.getId());
+            log.info("end processing get transaction history with email: {}", email);
             return new TransactionHistoryDTO(dtoRequest.getOffset(), dtoRequest.getLimit(), transactionMapper.toDto(transactions));
         } else {
             Pageable pageable = PageRequest.of(dtoRequest.getOffset(), dtoRequest.getLimit(), Sort.by("createdOn").descending());
             Page<Transaction> transactionPage = transactionRepository.findByMembershipIdOrderByCreatedOnDesc(membership.getId(), pageable);
+            log.info("end processing get transaction history pagination with email: {}", email);
             return new TransactionHistoryDTO(dtoRequest.getOffset(), dtoRequest.getLimit(), transactionMapper.toDto(transactionPage.getContent()));
         }
     }
