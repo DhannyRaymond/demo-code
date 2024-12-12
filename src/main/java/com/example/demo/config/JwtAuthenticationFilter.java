@@ -24,8 +24,6 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtUtils jwtUtils;
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -39,13 +37,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (JwtException e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write(CommonUtils.convertUsingJackson(new ResponseModel<>(108, "Token tidak tidak valid atau kadaluwarsa", null)));
+            setUnauthorizeResponse(response);
             return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void setUnauthorizeResponse(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(CommonUtils.convertUsingJackson(new ResponseModel<>(108, "Token tidak tidak valid atau kadaluwarsa", null)));
     }
 }
