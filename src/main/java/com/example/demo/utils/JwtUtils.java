@@ -23,13 +23,13 @@ public class JwtUtils {
                 .setSubject(email)
                 .claim("email", email)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 12)) // 12 hours
-//                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60)) // 1 minute
+//                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 12)) // 12 hours
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60)) // 1 minute
                 .signWith(secretKey)
                 .compact();
     }
 
-    public boolean validateToken(String token) {
+    public static boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
                     .setSigningKey(secretKey)

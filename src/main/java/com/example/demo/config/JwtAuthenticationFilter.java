@@ -1,5 +1,7 @@
 package com.example.demo.config;
 
+import com.example.demo.dto.ResponseModel;
+import com.example.demo.utils.CommonUtils;
 import com.example.demo.utils.JwtUtils;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -27,20 +29,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String token = jwtUtils.getTokenFromRequest(request);
+        String token = JwtUtils.getTokenFromRequest(request);
 
         try {
-            if (StringUtils.isNotEmpty(token) && jwtUtils.validateToken(token)) {
-                String email = jwtUtils.getEmailFromToken(token);
+            if (StringUtils.isNotEmpty(token) && JwtUtils.validateToken(token)) {
+                String email = JwtUtils.getEmailFromToken(token);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(email, null, null);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (JwtException e) {
-            throw new IOException("Token tidak tidak valid atau kadaluwarsa");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(CommonUtils.convertUsingJackson(new ResponseModel<>(108, "Token tidak tidak valid atau kadaluwarsa", null)));
+            return;
         }
 
         filterChain.doFilter(request, response);
     }
-
 }
