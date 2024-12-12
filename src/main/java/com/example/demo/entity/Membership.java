@@ -5,7 +5,6 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -14,7 +13,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.io.Serializable;
 import java.util.List;
@@ -27,8 +25,6 @@ import java.util.List;
 public class Membership implements Serializable {
 
     @Id
-    @GeneratedValue(generator = "uuid")
-    @GenericGenerator(name = "uuid", strategy = "uuid2")
     @Column(name = "id")
     private String id;
 
@@ -57,4 +53,11 @@ public class Membership implements Serializable {
 
     @OneToMany(mappedBy = "membership", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions;
+
+    public Membership(String email, String firstName, String lastName, String profileImage) {
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.profileImage = profileImage;
+    }
 }

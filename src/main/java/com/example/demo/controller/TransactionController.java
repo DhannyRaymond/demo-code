@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.BaseListDTO;
+import com.example.demo.dto.ListDTO;
 import com.example.demo.dto.ResponseModel;
 import com.example.demo.exception.CustomException;
 import com.example.demo.service.TransactionService;
@@ -49,7 +49,7 @@ public class TransactionController {
     }
 
     @GetMapping("/transaction/history")
-    public ResponseEntity<ResponseModel<Object>> transactionHistory(HttpServletRequest request, @ModelAttribute BaseListDTO dtoRequest) throws CustomException, IOException {
+    public ResponseEntity<ResponseModel<Object>> transactionHistory(HttpServletRequest request, @ModelAttribute ListDTO dtoRequest) throws CustomException, IOException {
         // TODO: UNAUTHORIZE HANDLING STILL GOT 403 INSTEAD 401 WHEN TOKEN EXPIRED
         log.info("start get transaction history with payload: {}", CommonUtils.convertUsingJackson(dtoRequest));
         return ResponseEntity.ok(new ResponseModel<>(0, "Get History Berhasil", transactionService.transactionHistory(request, dtoRequest)));

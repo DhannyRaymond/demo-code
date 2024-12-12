@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class BaseListDTO {
+public class ListDTO {
 
     @JsonProperty("offset")
     private Integer offset;

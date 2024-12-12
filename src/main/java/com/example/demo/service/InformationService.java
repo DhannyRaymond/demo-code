@@ -22,7 +22,7 @@ public class InformationService {
 
     public List<BannerDTO> banner() {
         log.info("start processing get banner");
-        List<Banner> banners = informationRepository.findAll();
+        List<Banner> banners = informationRepository.getAllBanner();
         log.info("end processing get banner");
         return bannerMapper.toDto(banners);
     }

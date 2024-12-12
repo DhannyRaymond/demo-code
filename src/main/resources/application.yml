@@ -29,6 +29,6 @@ application:
 applicationdb:
   database_host: localhost
   database_port: 5432
-  database_name: demo
+  database_name: nutech_integrasi
   database_username: postgres
   database_password: docker

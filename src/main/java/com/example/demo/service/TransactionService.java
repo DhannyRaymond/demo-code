@@ -1,7 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.BalanceDTO;
-import com.example.demo.dto.BaseListDTO;
+import com.example.demo.dto.ListDTO;
 import com.example.demo.dto.PaymentDTO;
 import com.example.demo.dto.TransactionHistoryDTO;
 import com.example.demo.entity.Balance;
@@ -20,10 +20,6 @@ import com.example.demo.utils.ValidationUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +49,7 @@ public class TransactionService {
         log.info("start processing get balance with email: {}", email);
         Membership membership = membershipRepository.findByEmail(email);
 
-        Balance balance = balanceRepository.findByMembershipId(membership.getId());
+        Balance balance = balanceRepository.getBalanceByMembershipId(membership.getId());
         log.info("end processing get balance with email: {}", email);
         return balanceMapper.toDto(balance);
     }
@@ -66,11 +62,13 @@ public class TransactionService {
         Integer topupAmount = ValidationUtils.validateTopup(obj);
         Membership membership = membershipRepository.findByEmail(email);
 
-        Balance balance = balanceRepository.findByMembershipId(membership.getId());
+        Balance balance = balanceRepository.getBalanceByMembershipId(membership.getId());
         Integer amount = Integer.sum(balance.getBalance(), topupAmount);
         balance.setBalance(amount);
 
-        transactionRepository.save(new Transaction(membership, "INV".concat(String.valueOf(Instant.now().toEpochMilli())), "TOPUP", "Top Up balance", topupAmount));
+        Instant now = Instant.now();
+        String transactionId = "TRANSACTION_".concat(String.valueOf(now.toEpochMilli()));
+        transactionRepository.insertTransaction(transactionId, now, "Top Up balance", "INV".concat(String.valueOf(now.toEpochMilli())), topupAmount, "TOPUP", membership.getId());
 
         log.info("end processing topup with email: {}", email);
         return balanceMapper.toDto(balance);
@@ -81,7 +79,7 @@ public class TransactionService {
 
         log.info("start processing transaction with email: {}", email);
         Membership membership = membershipRepository.findByEmail(email);
-        Balance balance = balanceRepository.findByMembershipId(membership.getId());
+        Balance balance = balanceRepository.getBalanceByMembershipId(membership.getId());
 
         String serviceCode = CommonUtils.getMapValue("service_code", requestMap);
         Partner partner = partnerRepository.findByServiceCode(serviceCode);
@@ -97,12 +95,12 @@ public class TransactionService {
             throw new CustomException(102, "Saldo tidak mencukupi untuk melakukan pembayaran");
         } else {
             Integer finalAmount = balance.getBalance() - partner.getServiceTariff();
-            balance.setBalance(finalAmount);
-            balanceRepository.save(balance);
+            balanceRepository.updateBalance(balance.getId(), membership.getId(), finalAmount);
 
-            invoiceNumber = "INV".concat(String.valueOf(Instant.now().toEpochMilli()));
-            transaction = new Transaction(membership, invoiceNumber, "PAYMENT", partner.getServiceName(), partner.getServiceTariff());
-            transactionRepository.save(transaction);
+            Instant now = Instant.now();
+            String transactionId = "TRANSACTION_".concat(String.valueOf(now.toEpochMilli()));
+            invoiceNumber = "INV".concat(String.valueOf(now.toEpochMilli()));
+            transaction = transactionRepository.insertTransaction(transactionId, now, partner.getServiceName(), invoiceNumber, partner.getServiceTariff(), "PAYMENT", membership.getId());
             log.info("transaction: {} success with email: {}", serviceCode, email);
         }
 
@@ -110,7 +108,7 @@ public class TransactionService {
         return this.mappingToResponse(partner, transaction, invoiceNumber);
     }
 
-    public TransactionHistoryDTO transactionHistory(HttpServletRequest request, BaseListDTO dtoRequest) throws CustomException, IOException {
+    public TransactionHistoryDTO transactionHistory(HttpServletRequest request, ListDTO dtoRequest) throws CustomException, IOException {
         String email = ValidationUtils.validateLogin(request);
 
         log.info("start processing get transaction history with email: {}", email);
@@ -122,10 +120,9 @@ public class TransactionService {
             log.info("end processing get transaction history with email: {}", email);
             return new TransactionHistoryDTO(dtoRequest.getOffset(), dtoRequest.getLimit(), transactionMapper.toDto(transactions));
         } else {
-            Pageable pageable = PageRequest.of(dtoRequest.getOffset(), dtoRequest.getLimit(), Sort.by("createdOn").descending());
-            Page<Transaction> transactionPage = transactionRepository.findByMembershipIdOrderByCreatedOnDesc(membership.getId(), pageable);
+            transactions = transactionRepository.findByMembershipIdOrderByCreatedOnDesc(membership.getId(), dtoRequest.getLimit(), dtoRequest.getOffset());
             log.info("end processing get transaction history pagination with email: {}", email);
-            return new TransactionHistoryDTO(dtoRequest.getOffset(), dtoRequest.getLimit(), transactionMapper.toDto(transactionPage.getContent()));
+            return new TransactionHistoryDTO(dtoRequest.getOffset(), dtoRequest.getLimit(), transactionMapper.toDto(transactions));
         }
     }
 

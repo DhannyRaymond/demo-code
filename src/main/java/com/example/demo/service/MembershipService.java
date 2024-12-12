@@ -52,10 +52,10 @@ public class MembershipService {
         log.info("start processing registration with payload: {}", message);
         ValidationUtils.validateEmail(registrationDTO.getEmail());
         ValidationUtils.validatePassword(registrationDTO.getPassword(), null, "registration");
+        String membershipId = "MEMBER_".concat(String.valueOf(Instant.now().toEpochMilli()));
 
         String encoderPassword = passwordEncoder.encode(registrationDTO.getPassword());
-        registrationDTO.setPassword(encoderPassword);
-        Membership membership = membershipRepository.save(registrationMapper.toEntity(registrationDTO));
+        Membership membership = membershipRepository.insertMembership(membershipId, registrationDTO.getEmail(), registrationDTO.getFirstName(), registrationDTO.getLastName(), encoderPassword, "");
         balanceRepository.save(new Balance(membership, 0));
 
         log.info("end processing registration with payload: {}", message);
@@ -89,10 +89,10 @@ public class MembershipService {
 
         log.info("start processing update profile with email: {}", email);
         Membership membership = membershipRepository.findByEmail(email);
-        membership.setFirstName(profileDTO.getFirstName());
-        membership.setLastName(profileDTO.getLastName());
+        membershipRepository.updateMembership(membership.getId(), profileDTO.getFirstName(), profileDTO.getLastName());
+
         log.info("end processing update profile with email: {}", email);
-        return profileMapper.toDto(membership);
+        return profileMapper.toDto(new Membership(email, profileDTO.getFirstName(), profileDTO.getLastName(), membership.getProfileImage()));
     }
 
     public MembershipDTO updateProfileImage(HttpServletRequest request, MultipartFile file) throws CustomException, IOException {
@@ -112,7 +112,7 @@ public class MembershipService {
             Path path = Paths.get(System.getProperty("user.dir").concat(UPLOAD_DIR), String.valueOf(Instant.now().toEpochMilli()).concat(fileName));
             Files.copy(file.getInputStream(), path);
 
-            membership.setProfileImage(path.toString());
+            membershipRepository.updateProfileImage(membership.getId(), path.toString());
             log.info("end processing update profile image with email: {}", email);
             return profileMapper.toDto(membership);
         } catch (IOException e) {

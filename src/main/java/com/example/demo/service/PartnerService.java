@@ -28,7 +28,7 @@ public class PartnerService {
         String email = ValidationUtils.validateLogin(request);
 
         log.info("start processing get service with email: {}", email);
-        List<Partner> partners = partnerRepository.findAll();
+        List<Partner> partners = partnerRepository.getAllPartner();
         log.info("end processing get service with email: {}", email);
         return partnerMapper.toDto(partners);
     }
