@@ -45,21 +45,18 @@ public class MembershipController {
 
     @GetMapping("/profile")
     public ResponseEntity<ResponseModel<Object>> profile(HttpServletRequest request) throws CustomException, IOException {
-        // TODO: UNAUTHORIZE HANDLING STILL GOT 403 INSTEAD 401 WHEN TOKEN EXPIRED
         log.info("start get profile");
         return ResponseEntity.ok(new ResponseModel<>(0, "Sukses", membershipService.getProfile(request)));
     }
 
     @PutMapping("/profile/update")
     public ResponseEntity<ResponseModel<Object>> updateProfile(HttpServletRequest request, @RequestBody ProfileDTO profileDTO) throws CustomException, IOException {
-        // TODO: UNAUTHORIZE HANDLING STILL GOT 403 INSTEAD 401 WHEN TOKEN EXPIRED
         log.info("start profile update");
         return ResponseEntity.ok(new ResponseModel<>(0, "Update Pofile berhasil", membershipService.updateProfile(request, profileDTO)));
     }
 
     @PutMapping("/profile/image")
     public ResponseEntity<ResponseModel<Object>> updateProfileImage(HttpServletRequest request, @RequestParam("file") MultipartFile file) throws CustomException, IOException {
-        // TODO: UNAUTHORIZE HANDLING STILL GOT 403 INSTEAD 401 WHEN TOKEN EXPIRED
         log.info("start profile image update");
         return ResponseEntity.ok(new ResponseModel<>(0, "Update Profile Image berhasil", membershipService.updateProfileImage(request, file)));
     }
