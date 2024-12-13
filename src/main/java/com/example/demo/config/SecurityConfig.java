@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +25,12 @@ public class SecurityConfig {
                         .requestMatchers("/module/membership/login", "/module/membership/registration", "/module/information/banner").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exceptionHandlingCustomizer ->
+                        exceptionHandlingCustomizer.authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication is required")
+                        )
+                );
 
         return http.build();
     }
